@@ -1,0 +1,57 @@
+name: Compilar y Desplegar
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'DsiCode.Micro.Product.API/**'
+      - '.github/workflows/Compilar_Desplegar.ym'
+
+env:
+  VERSION_DOTNET: '9.0.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env: 
+      # Solo el nombre del .csproj, porque el rango ya esta "en" la carpeta correcta
+      PROYECTO: DsiCode.Micro.Product.API.csproj
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup .NET SDK ${{ env.VERSION_DOTNET }}
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.VERSION_DOTNET }}
+          include-prerelease: true
+
+      - name: Verificar SDK Instalado
+        run: dotnet --info
+
+      # Paso de Diagnostico rápido
+      - name: Listar etructura de carpetas
+        run: ls -R .
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: -/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashfiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROYECTO }}
+
+      - name: Build
+        run: dotnet build ${{ env.PROYECTO }} --no-restore --configuration Release
+
+      - name: test
+        run: dotnet test ${{ env.PROYECTO }} --no-build --configuration Release
+
+      - name: Publish
+        run: dotnet publish ${{ env.PROYECTO }} --no-build --configuration Release --ouput ./publish
