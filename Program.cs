@@ -10,12 +10,12 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers  
+// Controllers
 builder.Services.AddControllers()
-   .AddJsonOptions(opts =>
-       opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+    .AddJsonOptions(opts =>
+        opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
-// DB Context  
+// DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -35,14 +35,14 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader());
 });
 
-
+builder.Services.AddEndpointsApiExplorer();
 
 // Swagger + JWT
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Coupon MicroService", Version = "v1" });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Product MicroService", Version = "v1" });
 
-    options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+    options.AddSecurityDefinition(name: JwtBearerDefaults.AuthenticationScheme, securityScheme: new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Description = "Enter 'Bearer {token}'",
@@ -76,23 +76,24 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.  
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Products API V1");
     });
 }
-
 //app.UseHttpsRedirection();
 
 app.UseCors("AllowAllOrigins");
 
+app.UseStaticFiles();
 
 app.UseAuthorization();
+
 
 app.MapControllers();
 
